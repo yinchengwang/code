@@ -72,6 +72,35 @@ bash scripts/fetch-reference.sh --check            # 只校验清单与磁盘，
 python scripts/check_consistency.py                # 四仓一致性校验
 ```
 
+## 常见问题
+
+### 为什么第一次 `git clone` 后 submodule 目录是空的？
+
+远程初始化仓只包含 code 自身的 Git 跟踪文件，不包含 submodule 工作树内容。请在 code 根运行：
+
+```bash
+bash scripts/bootstrap.sh
+```
+
+该脚本会初始化四个直接 submodule，并执行一致性检查。手动初始化时可用 `git submodule update --init`；由于 reference 在 `.gitmodules` 标记了 `update = none`，该命令会跳过 reference。bootstrap 脚本显式覆盖该设置并初始化 reference 的仓库本身；它**不会**递归初始化 reference 内部的 95 个第三方库。按需获取这些源码请使用 `scripts/fetch-reference.sh`。
+
+### `git clone --recurse-submodules` 会做什么？
+
+会尝试递归初始化四个直接 submodule，再向下递归。reference 的 `update = none` 按 Git 配置应使它跳过，但仍以实际使用的 Git 版本做过的 clean-clone 验证为准。当前 Stage A 的 clean clone 检查发现：projects 与 reference 的 gitlink 目录为空是预期的；learning 克隆在本机超时，**因此暂不能宣称该路径完整验证通过**。为了避免误拉 25 GB 上游，不推荐使用递归 clone；推荐普通 clone 后运行 bootstrap。
+
+### 如何检查 code 与子仓 pin 一致？
+
+```bash
+python scripts/check_consistency.py
+ git submodule status
+```
+
+`repos.yaml` 是仓角色、路径和策略的语义清单；`.gitmodules` 与 index 中的 gitlink 是 Git URL/update/pin 的实际记录。子仓独立提交推送后，需要在 code 仓更新相应 gitlink。
+
+## 迁移资料
+
+目录重构、Stage A0 仓库审计和数据库收敛总设计保存在 [`docs/superpowers/`](docs/superpowers/)；执行步骤与验证门保存在 [`docs/superpowers/plans/2026-11-15-code-umbrella-and-db-convergence.md`](docs/superpowers/plans/2026-11-15-code-umbrella-and-db-convergence.md)。
+
 ## 归谁管什么
 
 | 内容 | 归属 |

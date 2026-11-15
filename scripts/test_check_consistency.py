@@ -192,6 +192,34 @@ class TestCloneUrlDivergence(unittest.TestCase):
 class TestParseGitmodules(unittest.TestCase):
     """.gitmodules 的键名必须精确匹配 —— `pathology = x` 不是 path。"""
 
+    def test_real_shape_two_submodules(self):
+        from check_consistency import parse_gitmodules
+        text = (
+            '[submodule "projects"]\n'
+            '\tpath = projects\n'
+            '\turl = https://github.com/yinchengwang/projects.git\n'
+            '[submodule "reference"]\n'
+            '\tpath = reference\n'
+            '\turl = https://github.com/yinchengwang/reference.git\n'
+            '\tupdate = none\n'
+        )
+        self.assertEqual(parse_gitmodules(text), {
+            "projects": "https://github.com/yinchengwang/projects.git",
+            "reference": "https://github.com/yinchengwang/reference.git"})
+
+    def test_parse_gitmodule_updates(self):
+        from check_consistency import parse_gitmodule_updates
+        text = (
+            '[submodule "projects"]\n'
+            '\tpath = projects\n'
+            '\turl = https://github.com/yinchengwang/projects.git\n'
+            '[submodule "reference"]\n'
+            '\tpath = reference\n'
+            '\turl = https://github.com/yinchengwang/reference.git\n'
+            '\tupdate = none\n'
+        )
+        self.assertEqual(parse_gitmodule_updates(text), {"reference": "none"})
+
     def test_pathology_key_is_not_mistaken_for_path(self):
         from check_consistency import parse_gitmodules
         text = (
@@ -388,6 +416,24 @@ class TestCheckAllGate(unittest.TestCase):
     def _run(self, root):
         from check_consistency import check_all
         return check_all(root)
+
+    def test_update_mismatch_is_reported(self):
+        """repos.yaml 声明 update=none，但 .gitmodules 缺失该保护时必须报错。"""
+        root = self._tree()
+        path = os.path.join(root, ".gitmodules")
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        text = text.replace("\tupdate = none\n", "")
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write(text)
+        problems, _ = self._run(root)
+        self.assertTrue(any("update 与 .gitmodules 不一致" in p for p in problems), problems)
+
+    def test_update_none_in_gitmodules_is_accepted(self):
+        """reference 的 update=none 与 repos.yaml 一致时应通过。"""
+        root = self._tree()
+        problems, _ = self._run(root)
+        self.assertFalse(any("update 与 .gitmodules 不一致" in p for p in problems), problems)
 
     def test_clean_tree_has_no_problems(self):
         root = self._tree()
