@@ -1,0 +1,35 @@
+# 工作区临时物（不跟踪，保留在磁盘）
+.tmp/
+.ftmerge1/
+.scratch/
+.plan-extract*/
+.algo-plan-verify/
+.t1-check/
+.dsh-acl-out/
+m5-verify/
+.superpowers/
+.claude/
+.vscode/
+
+# 与四仓体系无关
+3D相册/
+_archive/
+
+# 根目录一次性交接文档与调试物
+HANDOFF-CLAUDE.md
+HANDOFF-PROMPT.md
+extract-plan.js
+verify_urls.py
+ftdbg*.c
+b.txt
+bench_out.txt
+bt_fine.txt
+stat_out.txt
+stat_err.txt
+build_a3.log
+
+# 通用
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
