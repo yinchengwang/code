@@ -86,7 +86,9 @@ bash scripts/bootstrap.sh
 
 ### `git clone --recurse-submodules` 会做什么？
 
-会尝试递归初始化四个直接 submodule，再向下递归。reference 的 `update = none` 按 Git 配置应使它跳过，但仍以实际使用的 Git 版本做过的 clean-clone 验证为准。当前 Stage A 的 clean clone 检查发现：projects 与 reference 的 gitlink 目录为空是预期的；learning 克隆在本机超时，**因此暂不能宣称该路径完整验证通过**。为了避免误拉 25 GB 上游，不推荐使用递归 clone；推荐普通 clone 后运行 bootstrap。
+会尝试递归初始化四个直接 submodule，再向下递归。reference 的 `update = none` **已在沙盒实测**：裸 `git submodule update --init` 会打印 `Skipping submodule 'child'` 并保持未初始化；只有显式 `-c submodule.<name>.update=checkout` 才会初始化，且该覆盖**不会**向下递归它的上游。
+
+> 当前 Stage A 的 clean clone 检查仍有一项未完成：learning 的克隆在本机超时，**因此完整 clean clone 不能宣称验证通过**。递归 clone 本身被推荐避开（不是因为它会拉 25 GB，而是因为一旦 Git 行为与预期不同，代价极高）；推荐普通 clone 后运行 bootstrap。
 
 ### 如何检查 code 与子仓 pin 一致？
 
