@@ -1,4 +1,5 @@
 # 工作区临时物（不跟踪，保留在磁盘）
+.worktrees/
 .tmp/
 .ftmerge1/
 .scratch/
