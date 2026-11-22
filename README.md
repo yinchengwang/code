@@ -63,6 +63,7 @@ Windows PowerShell 用 `scripts/bootstrap.ps1`。
 | `scripts/bootstrap.sh` / `.ps1` | 初始化四个 submodule + 一致性校验 |
 | `scripts/fetch-reference.sh` | 按 catalog 拉取 reference 的上游源码 |
 | `scripts/check_consistency.py` | 校验 `repos.yaml` ↔ `.gitmodules` ↔ 实际目录 |
+| `scripts/audit_workspace.py` | 只读检查根目录临时目录与可疑散文件；只报告、不删除 |
 
 ```bash
 bash scripts/fetch-reference.sh --tier core        # 按 tier 拉（默认 core）

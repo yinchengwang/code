@@ -1,35 +1,17 @@
-# 工作区临时物（不跟踪，保留在磁盘）
+# 本机工作区（保留但不纳入版本库）
 .worktrees/
-.tmp/
-.ftmerge1/
 .scratch/
-.plan-extract*/
-.algo-plan-verify/
-.t1-check/
-.dsh-acl-out/
-m5-verify/
 .superpowers/
 .claude/
 .vscode/
+m5-verify/
 
-# 与四仓体系无关
-3D相册/
-_archive/
-
-# 根目录一次性交接文档与调试物
-HANDOFF-CLAUDE.md
-HANDOFF-PROMPT.md
-extract-plan.js
-verify_urls.py
-ftdbg*.c
-b.txt
-bench_out.txt
-bt_fine.txt
-stat_out.txt
-stat_err.txt
-build_a3.log
-
-# 通用
+# 通用临时/构建产物防护：忽略不等于允许随意删除
+*.log
+*.tmp
+*.bak
+*.orig
+*.rej
 __pycache__/
 *.pyc
 .DS_Store
