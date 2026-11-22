@@ -295,7 +295,8 @@ git push origin main
 
 - [ ] **Step 1: 写失败的测试**
 
-在 `tests/remediation-loader-status.test.js` 末尾追加：
+在 `tests/remediation-loader-status.test.js` 末尾追加（**Task 2 已建这个文件并写了 3 条用例，
+追加到末尾、不要重写整份**——那 3 条钉住 loader B 一律给 draft）：
 
 ```js
 const verify = require("../core/supply/verify.js")
@@ -743,18 +744,28 @@ git push origin main
 
 ---
 
-### Task 6: 判题解释器可配置（服务端）
+### Task 6: 判题解释器可配置（服务端 + 离线 CLI）
 
 **Files:**
-- Modify: `projects/apps/study-hub/server/api-session.js:786-846`（`PUT /api/settings` 白名单）
-- Modify: `projects/apps/study-hub/server/api-session.js:136-150`（`createEnvProbe` 缓存）
-- Modify: `projects/apps/study-hub/server/app.js:349`（单元索引的 pythonOverride）
+- Modify: `projects/apps/study-hub/server/api-session.js:756-841`（`PUT /api/settings` 白名单，插入点在 829 行后）
+- Modify: `projects/apps/study-hub/server/api-session.js:142-150`（`createEnvProbe` 缓存）
+- Modify: `projects/apps/study-hub/server/api-session.js:131-134`（`probeEnv` 回值加 version/cmd）
+- Modify: `projects/apps/study-hub/server/app.js:349-352`（单元索引的 pythonOverride + 重扫入口）
+- Modify: **`projects/apps/study-hub/tools/supply.js:373-378` 与 `:588-594`**（离线 CLI 也读同一解释器配置 —— 差异清单 D-13b）
 - Test: `projects/apps/study-hub/tests/remediation-settings-python.test.js`（新建）
 
 **Interfaces:**
-- Consumes: `detectPython(override)`（`judge/sandbox.js`）
+- Consumes: `detectPython(override)`（`judge/sandbox.js`）、`resolvePythonOverride(env)`（`core/paths.js`）
 - Produces: `PUT /api/settings` 接受 `python_cmd` 字段；
-  `GET /api/settings` 的 `env` 段里含 `python.cmd` 与 `python.numpy_version`
+  `GET /api/settings` 的 `env` 段里含 `python.cmd` / `python.args` / `numpy.version`；
+  **离线 `tools/supply.js` 的 `verify` 与 `generate` 也遵守同一解释器优先级**
+
+**⚠️ 差异清单 D-13b（评审发现，必须一并修）**：当前 `tools/supply.js` 的
+`loadUnits({...})`（第 373–378 行）与 `verifyBatch({...})`（第 588–594 行）**都没传 `pythonOverride`**，
+全文也没有 `resolvePythonOverride` / `STUDY_HUB_PYTHON`（实测 0 处）。
+后果：`node tools/supply.js verify --track ai` 会走自动探测落到没有 numpy 的 `python`（3.11），
+把 13 张 AI 卡全判成「环境缺失跳过」——**这正是设计 §5.1 描述的三处不一致的原症状**。
+本任务把它一起修，否则 R2/R3 校验 AI 卡会全跳过。
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -1067,7 +1078,80 @@ function createEnvProbe(ctx) {
 这样 `units` 数组的**引用不变**、内容更新，所有持有引用的地方自动看到新数据。
 （因此第 395 行的 `const units` **不用改**成 `let`。）
 
-- [ ] **Step 8: 跑测试确认通过**
+- [ ] **Step 8: 离线 CLI 也读同一解释器配置（差异清单 D-13b）**
+
+`tools/supply.js` 改两处，让 `verify` 与 `generate` 都遵守
+`settings.judge.python.cmd > STUDY_HUB_PYTHON > 自动探测` 这条优先级。
+
+(a) 文件顶部 import 补上（`core/paths.js` 已在该文件被 require 过，把 `resolvePythonOverride`
+加进已有的解构列表）：
+
+```js
+const { resolveLearningRoot, localBankDir, resolvePythonOverride } = require("../core/paths.js")
+```
+
+(b) `loadUnits({...})`（第 373–378 行）补 `pythonOverride`：
+
+```js
+    const loaded = loadUnits({
+      learningRoot: learning.root,
+      localBank: localBank,
+      unitsDir: unitsDir,
+      grokkingDir: grokkingDir,
+      // 与判题、环境自检同一口径：settings 优先，其次 STUDY_HUB_PYTHON。
+      // 不传的话 loader 的 numpy 警告会按自动探测算，跟判题结论矛盾。
+      pythonOverride: (c.store && typeof c.store.getSetting === "function"
+        ? c.store.getSetting("judge.python.cmd")
+        : "") || resolvePythonOverride(env) || null,
+    })
+```
+
+(c) `verifyBatch({...})`（第 588–594 行）补 `pythonOverride`：
+
+```js
+    const pythonOverride = (c.store && typeof c.store.getSetting === "function"
+      ? c.store.getSetting("judge.python.cmd")
+      : "") || resolvePythonOverride(env) || null
+    const batch = await verifyBatch({
+      units: targets,
+      learningRoot: learning.root,
+      unitsDir: unitsDir,
+      repoRoot: learning.root,
+      stateFile: stateFile,
+      pythonOverride: pythonOverride,
+    })
+```
+
+（`verifyBatch` 已经支持这个参数：`core/supply/verify.js:295` 的
+`resolveToolchain({ pythonOverride: p.pythonOverride || null })` 就是读它。）
+
+- [ ] **Step 9: 补一条 CLI 的验证用例**
+
+在 `tests/remediation-settings-python.test.js` 末尾追加：
+
+```js
+const supplyCli = require("../tools/supply.js")
+
+test("CLI 的 loadUnits 与 verifyBatch 都带上同一个 pythonOverride", async function () {
+  // 只验参数是否被传下去，不真跑 python：注入一个假的 loadUnits 不方便，
+  // 所以直接读源码里有没有这个键——这是防回归的最小闸门。
+  const src = require("node:fs").readFileSync(
+    require("node:path").join(__dirname, "..", "tools", "supply.js"),
+    "utf8"
+  )
+  const loadUnitsAt = src.indexOf("const loaded = loadUnits({")
+  assert.ok(loadUnitsAt !== -1, "找不到 loadUnits 调用")
+  const loadUnitsBlock = src.slice(loadUnitsAt, loadUnitsAt + 600)
+  assert.ok(loadUnitsBlock.indexOf("pythonOverride") !== -1, "loadUnits 没传 pythonOverride")
+
+  const batchAt = src.indexOf("await verifyBatch({")
+  assert.ok(batchAt !== -1, "找不到 verifyBatch 调用")
+  const batchBlock = src.slice(batchAt, batchAt + 400)
+  assert.ok(batchBlock.indexOf("pythonOverride") !== -1, "verifyBatch 没传 pythonOverride")
+})
+```
+
+- [ ] **Step 10: 跑测试确认通过**
 
 Run:
 
@@ -1076,16 +1160,28 @@ cd C:\code\projects\apps\study-hub
 node tests/remediation-settings-python.test.js
 node tests/p1-api-session.test.js
 node tests/api.test.js
+node tests/supply-cli.test.js
 ```
 
 Expected: 全部 PASS。
 
-- [ ] **Step 9: 提交**
+再手动确认 CLI 的解释器结论真的变了：
+
+```powershell
+cd C:\code\projects\apps\study-hub
+$env:STUDY_HUB_LEARNING_ROOT='C:\code\learning'
+$env:STUDY_HUB_PYTHON='py -3'
+node tools/supply.js verify --track ai 2>&1 | Select-String '环境缺失|已验证|跳过' | Select-Object -First 5
+```
+
+Expected: **不再**出现「环境缺失：本机没有装 numpy」；13 张卡要么「已验证」要么因断言脚本缺失而报别的理由。
+
+- [ ] **Step 11: 提交**
 
 ```bash
 cd C:\code\projects
-git add apps/study-hub/server/api-session.js apps/study-hub/server/app.js apps/study-hub/tests/remediation-settings-python.test.js
-git commit -m "feat(study-hub): 判题解释器可配置，环境自检与判题同一口径"
+git add apps/study-hub/server/api-session.js apps/study-hub/server/app.js apps/study-hub/tools/supply.js apps/study-hub/tests/remediation-settings-python.test.js
+git commit -m "feat(study-hub): 判题解释器可配置，环境自检、判题与离线 CLI 同一口径"
 git push origin main
 ```
 
