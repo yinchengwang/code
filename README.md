@@ -108,7 +108,12 @@ python scripts/check_consistency.py
 | 内容 | 归属 |
 |---|---|
 | 引擎、小程序、项目级文档、agent 规约 | `projects/` |
+| **长周期项目的代码产物**（脚本、契约实现、测试、文档语料、应用） | `projects/`（wiki 工装在 `projects/scripts/wiki/`，契约在 `projects/docs/wiki/`，RAG 应用将建于 `projects/apps/wiki-rag/`） |
 | 学习笔记、课程进度、题解、Obsidian vault | `learning/` |
 | 跨项目复用的模板、方法论、模式、提示词 | `ai-docs/` |
+| **长周期项目的设计规格与实施计划** | `ai-docs/methodology/planning/` |
 | 第三方源码镜像与带行号的源码笔记 | `reference/` |
 | 四仓关系、bootstrap、目录规范 | **本仓（code）** |
+
+> 2026-11-22 起：设计规格与实施计划不再放 `code/docs/superpowers/`，统一收进 `ai-docs/methodology/planning/`。
+> 判定口径见 [`ai-docs/README.md`](ai-docs/README.md) 的「收录边界」一节 —— 按资产类型划分，不按「是否项目特定」划分。
