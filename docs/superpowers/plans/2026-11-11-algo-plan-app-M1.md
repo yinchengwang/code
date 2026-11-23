@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（`projects` 仓）：`67cea988a`（接线 M1 的三个接口与今日页）、
+> `4540e52c9` / `3ed2453fd`（M1 Task 1 两轮评审修复）。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代，
+> 现状见 `2026-11-12-study-hub-design.md` 与
+> `2026-11-22-study-hub-remediation-design.md`。
+
 **Goal:** 交付 M1 里程碑——一个能跑起来的本地 Web 应用骨架：服务起得来、SQLite schema 就位、题库 markdown 能解析、页面壳能看到真实数据。
 
 **Architecture:** 单个 Node 进程（`node:http` + `node:sqlite`），零 npm 依赖、零构建。`core/` 是纯函数层（Problem 模型、markdown 解析、provider），可脱离 IO 单测；`server/` 是组合根 + 路由 + 存储；`web/` 是原生 JS 单页。数据双层照设计文档 §1.7：低频人读内容进 `learning` 仓（git），高频调度态进 SQLite，靠稳定题目 ID 互链。

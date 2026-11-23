@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（`projects` 仓）：`6bc5ecbc8`（掌握度模型与诊断数据装配）、
+> `5ad485ead`（诊断页与手绘 SVG 图表）、`c06b41057`（诊断端到端验收并更新 README）。
+> 产物仍在 `projects/apps/study-hub/core/mastery/` 与 `web/diagnose.js` / `web/charts.js`。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代。
+
 **Goal:** 交付 M5 里程碑——看得见的诊断：掌握度模型（可解释）、`GET /api/insights` 接口、以及一个手绘 SVG 的「诊断」页（掌握度雷达、弱项榜、每日题量曲线、知识点覆盖），零第三方图表库。
 
 **Architecture:** 掌握度模型是**纯函数**（`core/mastery/`），可脱离 IO 单测；诊断数据由 `server/insights.js` 装配（读 `attempts` 表 + 题库 → 派生统计 → 物化回 `topics` 表 → 读 `topics` 表算掌握度）；前端图表的几何计算与 SVG 拼接也在**纯函数**里（`web/charts.js`，UMD 双模，Node 与浏览器共用），页面只负责把 SVG 字符串塞进 DOM。零 npm 依赖、零构建。

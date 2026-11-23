@@ -13,6 +13,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本文件是早期草稿，已被拆分取代，不要照着执行。**
+> M1–M4 的正式计划已拆为 `2026-11-11-algo-plan-app-M1.md` … `-M4.md`；
+> M1–M6 均已实施（见各文件的执行状态头）。
+> 勾选框未逐条回填。
+
 **Goal:** 交付一个本机 Web 应用，把「练什么 → 判对错 → 该复习 → 进度写回 git」这条闭环跑通（M1–M4 主线），产出你愿意每天打开的版本。
 
 **Architecture:** 单个 Node 进程（`node:http` + `node:sqlite` + `node:child_process`），零 npm 依赖、零构建。`core/` 是纯函数层（排程 / SM-2 / 掌握度 / 用例解析 / 同步），可脱离 IO 单测；`server/` 提供 REST API 与静态页；`judge/` 真实编译执行用户代码；`web/` 原生 JS 单页。数据双层：低频人读内容进 `learning` 仓（git），高频调度态进 SQLite，靠稳定题目 ID 互链。

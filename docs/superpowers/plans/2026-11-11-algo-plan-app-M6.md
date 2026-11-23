@@ -2,6 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（`projects` 仓）：`efc49b3d3`（M6 LLM 增强——讲解、分级求助、批改思路、现造新题、补全缺口）。
+> 产物仍在 `projects/apps/study-hub/core/llm/`。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代。
+
 **Goal:** 交付 M6 里程碑——把 LLM 接进 app：提示词是纯函数、客户端可换可关、成本有护栏、五个场景（讲解 / 分级求助 / 批改思路 / 现造新题 / 补全缺口）都能用，并且**把 LLM 关掉后 app 依然完整可用**。
 
 **Architecture:** 在 M1 的三层骨架上加一层 `core/llm/`：`prompts.js`（纯函数，构造提示词与解析响应）、`client.js`（`ArkClient` / `AnthropicClient` / `NullClient` 三个实现，统一 `complete({system, user, temperature}) -> Promise<string>`）、`guard.js`（成本护栏，计数落 M1 已有的 `settings` 表）、`service.js`（把提示词、客户端、护栏、题库串成五个场景，生成的题落盘进 `learning/bank/`）。`server/api-llm.js` 挂五个场景接口（**不碰 M1 的 `server/api.js`**，免得和 M2–M5 抢同一个文件），`web/llm.js` 提供「LLM 工作台」。**LLM 全部是可选增强**：没有密钥就自动降级成 `NullClient`，排程、判题、复习、进度一项不少。
@@ -80,7 +85,7 @@ M6 只做**加法**：加接口、加模块、加前端区块。
 
 | 阶段 | 交付 | 本计划 |
 |---|---|---|
-| M1 骨架 | 服务起得来、SQLite schema、题库 md 解析、页面壳 | 已完成（前��） |
+| M1 骨架 | 服务起得来、SQLite schema、题库 md 解析、页面壳 | 已完成（前置） |
 | M2 题库 | 复活三个死脚本 + 存量题解导入 | 已完成（前置） |
 | M3 判题 | C++/Python 判题器 + verdict + 结果面板 | 已完成（前置） |
 | M4 闭环 | 轮次 + 推下一题 + SM-2 复习 + 写回 md | 已完成（前置） |

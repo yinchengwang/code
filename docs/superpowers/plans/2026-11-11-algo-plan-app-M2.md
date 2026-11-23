@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（`projects` 仓）：`e11257747`（题库 provider 与 learning 仓路径解析）、
+> `a0d9cc20a`（样板题导入工具 + 端到端测试 + README）、`49eb90590`（死脚本题库导入器）、
+> `8a64b99db`（存量题解导入器）、`8d9acee13`（一次性题库导入入口与端到端验收）、
+> `d01b0e677`（判题 fixture 题库与自检）、`691efb34a`（Codeforces 题源 + 工程仓题库接入 provider）。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代。
+
 **Goal:** 交付 M2 里程碑——把题库填满：复活 `projects/scripts/` 里三个死脚本的内联题目清单，导入 `learning/` 里的存量题解，全部落成 `learning/bank/<track>/<id>.md` 的题库文件，让 `GET /api/bank` 真的有几百道题可列。
 
 **Architecture:** 两层。新增 `core/bank/legacy.js` 与 `core/bank/solutions-scan.js` 两个**纯函数层**模块：只吃字符串、不碰磁盘，可以脱离 IO 单测；新增 `tools/import-catalog.js` 与 `tools/import-solutions.js` 两个**导入器**：读源码 → 调纯函数 → 用 M1 的 `serializeProblemMarkdown` 写成题库文件。三个死脚本**绝不执行**，只做静态解析。

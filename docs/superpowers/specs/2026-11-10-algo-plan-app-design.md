@@ -1,7 +1,12 @@
 # 算法能力提升计划 App —— 设计文档
 
 > 日期：2026-11-10
-> 状态：设计已确认，待写实施计划
+> 状态：设计已确认；**M1–M6 全部已实施**。本 App 于 2026-11-12 改名扩为三轨合一，
+> 即 **study-hub**（提交 `91738be0f`），后续工作由
+> [2026-11-12-study-hub-design.md](2026-11-12-study-hub-design.md) 与
+> [2026-11-22-study-hub-remediation-design.md](2026-11-22-study-hub-remediation-design.md) 接管。
+> 实施计划：`docs/superpowers/plans/2026-11-11-algo-plan-app-M1..M6.md`（勾选框未回填，
+> 但逐 Task 的实现提交在 `projects` 仓可查）
 > 归属仓：`projects`（工程产物） + `learning`（学习数据）
 
 ---

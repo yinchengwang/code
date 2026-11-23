@@ -1,7 +1,13 @@
 # StillEvolving 仓库布局设计
 
 - 日期：2026-10-25
-- 状态：待批准（未实现）
+- 状态：**已批准并已实现**（2026-11-23 复核）。`C:\code` 即顶层聚合仓，
+  `.gitmodules` 登记 4 个 submodule（`projects` / `learning` / `ai-docs` / `reference`，
+  其中 `reference` 设 `update = none`）；仓根脚手架由提交 `3411398`
+  （`feat: code 成为顶层聚合仓，四仓以 submodule 接入`）引入：
+  `scripts/bootstrap.ps1`、`bootstrap.sh`、`fetch-reference.sh`、`check_consistency.py`、
+  `audit_workspace.py`。实施计划：`docs/superpowers/plans/2026-10-25-stillevolving-repo-layout.md`
+  （勾选框未回填）
 - 形态：B（混合方案 —— 父仓 + submodule + 清单驱动拉取）
 - 关联前置输入：`docs/architecture-review-2026-10-25.md`、`docs/repos.yaml.sample.yaml`
 

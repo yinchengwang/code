@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（顶层聚合仓）：`3411398`（`feat: code 成为顶层聚合仓，四仓以 submodule 接入`）。
+> 产物：`.gitmodules`（4 个 submodule，`reference` 设 `update = none`）、
+> `scripts/bootstrap.ps1` / `bootstrap.sh` / `fetch-reference.sh` /
+> `check_consistency.py` / `audit_workspace.py`。
+> 勾选框未逐条回填——本计划只涉及一次性仓布局变更，逐 Step 勾选没有增量信息。
+
 **Goal:** 建立 `StillEvolving` 顶层聚合仓，把 `projects` / `learning` / `ai-docs` 三个自维护仓作为 submodule 挂载其下，同时让第三方源码库（reference 的 95 个上游）改由清单驱动按需拉取，取代递归克隆。
 
 **Architecture:** 混合形态。自维护仓走 git 原生 submodule（pin 由 gitlink mode 160000 保证）；第三方库走 `catalog.yml` + 拉取脚本，commit pin 显式记录在清单里，脚本在 submodule 内 fetch+checkout 到指定 commit。父仓另有一份 `repos.yaml` 声明四仓关系与目录规范，供 `check_consistency.py` 做机器校验。

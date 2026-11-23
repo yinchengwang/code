@@ -2,6 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 判题执行器产物仍在 `projects/apps/study-hub/judge/`
+> （`asserts.js` / `runner.js` / `sandbox.js`），是 study-hub 判题链路的底座。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代。
+
 **Goal:** 交付 M3 里程碑——一个能真的判题的本地执行器：C++/Python 代码提交进来，真实编译、真实跑用例、真实比对，产出五类 verdict（`pass` / `wrong_answer` / `timeout` / `compile_error` / `runtime_error`），并把结果面板显示在页面上。
 
 **Architecture:** 分两层。`core/judge-spec/` 是**纯函数层**（用例归一化、输出比对规则），可脱离 IO 单测；`judge/` 是**执行层**（临时目录、工具链探测、带超时杀进程树的子进程、编排器），真跑 `g++` 与 Python。HTTP 侧只在 M1 已有的三个接口上**加**一个 `POST /api/attempt`，响应形状照跨计划接口契约 §2 冻结的八字段。

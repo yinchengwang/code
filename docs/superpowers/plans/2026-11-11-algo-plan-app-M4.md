@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划已实施。**
+> 实现提交（`projects` 仓）：`d44022a26`（SM-2 间隔重复与判题结果映射）、
+> `422a789b6`（learning 仓轮次解析与写回）、`cf345aac5`（推下一题的排程器与单日配额）、
+> `1f82ccaa1`（接线 M4 的六个接口并把前端重做成四个页面）。
+> 勾选框未逐条回填——本计划已由后续的 study-hub 计划族取代。
+
 **Goal:** 交付 M4 里程碑——第一个「愿意每天打开」的版本：打开 app 就知道该练哪一题，答完能进间隔重复队列，复习完把轮次进度与错题订正写回 learning 仓。
 
 **Architecture:** 单个 Node 进程（`node:http` + `node:sqlite`），零 npm 依赖、零构建。M4 在 M1 的地基上补三块纯逻辑：`core/review/sm2.js`（SM-2 逐字搬运 + 判题结果→quality 映射）、`core/scheduler/next-action.js`（复习 > 轮次 > 探索的优先级 + 单日配额）、`core/sync/rounds.js`（轮次解析 / 勾选写回 / 错题订正 / 查脏）。数据双层照设计文档 §1.7：轮次进度与错题订正进 `learning` 仓（git），调度态与作答流水进 SQLite，靠稳定题目 ID 互链。**写回 learning 仓后绝不自动 commit**——只返回 diff，由用户决定。
