@@ -2,11 +2,32 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划尚未执行，勾选框全空 —— 属预期，不是遗漏。**
+>
+> - 前置 R0/R1 已完成：见 `2026-11-22-study-hub-remediation-P0.md` 的「实测结果回写」，
+>   以及 `docs/superpowers/specs/2026-11-22-study-hub-r1-acceptance.md`。
+> - **唯一阻塞项：LLM 密钥尚未提供。** Task 16–22 都要真实调用 LLM；
+>   拿到 key 之前，本计划的离线部分（Task 13–15：模板修正、抽样分层、断言修正）可以先做，
+>   但**不得声称「内容已补齐」**。
+> - 2026-11-23 实测基线（`node tools/supply.js report`，`STUDY_HUB_LEARNING_ROOT=C:\code\learning`）：
+>
+>   | 轨 | 总数 | todo | draft | verified | 已抽检 |
+>   |---|---:|---:|---:|---:|---:|
+>   | algorithm | 740 | 687 | 0 | 53 | 0 |
+>   | database | 16 | 0 | 16 | 0 | 0 |
+>   | ai | 13 | 0 | 13 | 0 | 0 |
+>
+>   欠账：缺断言脚本 25、缺讲解正文 716、缺参考解法 723、缺测试用例 687。
+>   算法 740 = learning 仓 689 + 工程仓 51；687 = 740 − 53 已验证。
+> - 与设计 §8 的分期对应：R2 = Task 16–19、21；R3 = Task 20、22；R4 = Task 23。
+>   Task 23 即「全量验收与文档回写」，同时负责把 `2026-11-12-study-hub-P0..P5`
+>   六份旧计划的勾选与实测回写补齐。
+
 **Goal:** 把 DB/AI 的 29 张卡补齐讲解与断言脚本，把算法轨 687 道空骨架题补齐四件套，
 全部经过真实执行校验与分层人工抽检。
 
 **Architecture:** 内容由既有供给流水线产出（`core/supply/` + `core/llm/`），本计划**不新建生成逻辑**——
-只补三处流水线缺陷（讲��重写、抽检分层、脚本内容不足），然后按批驱动既有命令。
+只补三处流水线缺陷（讲解重写、抽检分层、脚本内容不足），然后按批驱动既有命令。
 
 **Tech Stack:** Node ≥ 24、零 npm 依赖、Python 3（卡片断言）、g++ 14.2.0（算法题编译）。
 
@@ -42,16 +63,23 @@
 
 ---
 
-### Task 13: 断言脚本模板要求「覆盖关键结论」
+### Task 13: 断言/用例模板要求「覆盖关键结论」
 
 **Files:**
-- Modify: `projects/apps/study-hub/core/llm/prompts.js:622-740`（`generate-assert` 的三个轨模板）
+- Modify: `projects/apps/study-hub/core/llm/prompts.js:622-740`（`database` 与 `ai` 两轨的 `generate-assert` 模板）
+- Modify: `projects/apps/study-hub/core/llm/prompts.js:549-573`（`algorithm` 轨的 `generate-unit` 模板 —— 用例要求写这里）
 - Test: `projects/apps/study-hub/tests/remediation-supply-prompt.test.js`（新建）
 
 **Interfaces:**
-- Consumes: `buildSupplyPrompt("generate-assert", track, context)`
-- Produces: 三个轨的 `generate-assert` 模板都要求：**断言脚本必须覆盖 demo 的每个主要结论**，
-  且脚本要**检查具体数值/字符串**，不能只检查「跑完了」
+- Consumes: `buildSupplyPrompt(scenario, track, context)`
+- Produces: `database` / `ai` 两轨的 `generate-assert` 模板要求**覆盖 demo 的每个主要结论**且**检查具体内容**；
+  `algorithm` 轨的 `generate-unit` 模板要求**用例覆盖边界情况**且期望输出**具体**
+
+**⚠️ 实测事实（2026-11-22，必须照这个来）**：`algorithm` 轨的 `scenarios` 里**只有两个键**——
+`generate-unit`（第 549 行）与 `write-explain`（第 573 行），**没有 `generate-assert`**
+（`database` 的在 622 行、`ai` 的在 743 行）。
+所以调 `buildSupplyPrompt("generate-assert", "algorithm", ...)` 会直接抛
+「轨道「算法」没有场景「generate-assert」的模板」——测试会炸，不是断言失败。
 
 **为什么必须先修**：`mvcc` 与 `index_design` 的脚本失败原因实测为**断言覆盖不足**——
 `mvcc` 只断言了「快照隔离」那句，变异后 demo 走到 `else` 分支输出「读到了新数据」，
@@ -71,6 +99,10 @@
  * 实测教训：mvcc / index_design 的断言脚本只覆盖 demo 的一部分结论，
  * 变异测试因此抓不住被改坏的逻辑。模板必须明确要求「覆盖每个主要结论、
  * 检查具体内容」，否则新生成的脚本会重犯同一个错。
+ *
+ * 注意：algorithm 轨**没有** generate-assert 场景（只有 generate-unit 与
+ * write-explain）——它的用例要求写在 generate-unit 模板里，所以本测试对
+ * 算法轨查的是 generate-unit。
  */
 
 const test = require("node:test")
@@ -78,58 +110,56 @@ const assert = require("node:assert/strict")
 
 const prompts = require("../core/llm/prompts.js")
 
-const TRACKS = ["algorithm", "database", "ai"]
+const CARD_TRACKS = ["database", "ai"]
 
-test("三个轨的 generate-assert 模板都要求覆盖主要结论", function () {
-  TRACKS.forEach(function (track) {
-    const built = prompts.buildSupplyPrompt("generate-assert", track, {
-      title: "t",
-      statement: "s",
-      demo: "print(1)\n",
-      readme: "",
-      notes: "",
-      question: "",
-      topics: "x",
-      difficulty: "medium",
-    })
+const CTX = {
+  title: "t",
+  statement: "s",
+  demo: "print(1)\n",
+  readme: "",
+  notes: "",
+  question: "",
+  topics: "x",
+  difficulty: "medium",
+}
+
+test("database / ai 两轨的 generate-assert 模板都要求覆盖每个主要结论", function () {
+  CARD_TRACKS.forEach(function (track) {
+    const built = prompts.buildSupplyPrompt("generate-assert", track, CTX)
     const text = String(built.user || "")
     assert.ok(text.indexOf("覆盖") !== -1, track + " 模板要提「覆盖」")
     assert.ok(text.indexOf("每个") !== -1, track + " 模板要提「每个」")
   })
 })
 
-test("模板要求断言具体内容，不许只断言「跑完了」", function () {
-  TRACKS.forEach(function (track) {
-    const built = prompts.buildSupplyPrompt("generate-assert", track, {
-      title: "t",
-      statement: "s",
-      demo: "print(1)\n",
-      readme: "",
-      notes: "",
-      question: "",
-      topics: "x",
-      difficulty: "medium",
-    })
+test("database / ai 模板要求断言具体内容，不许只断言「跑完了」", function () {
+  CARD_TRACKS.forEach(function (track) {
+    const built = prompts.buildSupplyPrompt("generate-assert", track, CTX)
     const text = String(built.user || "")
     assert.ok(text.indexOf("具体") !== -1, track + " 模板要提「具体」")
   })
 })
 
-test("模板要求脚本能区分被测逻辑被改坏的情形", function () {
-  TRACKS.forEach(function (track) {
-    const built = prompts.buildSupplyPrompt("generate-assert", track, {
-      title: "t",
-      statement: "s",
-      demo: "print(1)\n",
-      readme: "",
-      notes: "",
-      question: "",
-      topics: "x",
-      difficulty: "medium",
-    })
+test("database / ai 模板要求脚本能区分被测逻辑被改坏的情形", function () {
+  CARD_TRACKS.forEach(function (track) {
+    const built = prompts.buildSupplyPrompt("generate-assert", track, CTX)
     const text = String(built.user || "")
     assert.ok(text.indexOf("改坏") !== -1, track + " 模板要提「改坏」")
   })
+})
+
+test("algorithm 轨的 generate-unit 模板要求用例覆盖边界、期望输出具体", function () {
+  const built = prompts.buildSupplyPrompt("generate-unit", "algorithm", CTX)
+  const text = String(built.user || "")
+  assert.ok(text.indexOf("边界") !== -1, "算法轨模板要提「边界」")
+  assert.ok(text.indexOf("具体") !== -1, "算法轨模板要提「具体」")
+})
+
+test("algorithm 轨确实没有 generate-assert 场景（这是设计如此，不是缺陷）", function () {
+  assert.strictEqual(prompts.hasSupplyTemplate("algorithm", "generate-assert"), false)
+  assert.strictEqual(prompts.hasSupplyTemplate("algorithm", "generate-unit"), true)
+  assert.strictEqual(prompts.hasSupplyTemplate("database", "generate-assert"), true)
+  assert.strictEqual(prompts.hasSupplyTemplate("ai", "generate-assert"), true)
 })
 ```
 
@@ -142,12 +172,13 @@ cd C:\code\projects\apps\study-hub
 node tests/remediation-supply-prompt.test.js
 ```
 
-Expected: FAIL —— 当前模板里没有「覆盖」「每个」「具体」「改坏」这些词。
+Expected: FAIL —— 当前模板里没有「覆盖」「每个」「具体」「改坏」「边界」这些词
+（`hasSupplyTemplate` 那条用例应当 PASS，因为它是现状描述）。
 
-- [ ] **Step 3: 改三个轨的 `generate-assert` 模板**
+- [ ] **Step 3: 改两个卡片轨的 `generate-assert` 模板**
 
-`core/llm/prompts.js`，在 `database`（第 622 行起）、`ai`（第 743 行起）两个轨的 `generate-assert` 段里，
-以及 `algorithm` 轨的对应段里，**给「要求写什么」那段补上以下三句**（三轨都要补，措辞可微调但三个关键词必须在）：
+`core/llm/prompts.js`，在 `database`（第 622 行起）与 `ai`（第 743 行起）两个轨的 `generate-assert` 段里，
+**给「要求写什么」那段补上以下三句**（两轨都要补，措辞可微调但三个关键词「覆盖」「每个」「具体」「改坏」必须在）：
 
 ```text
 断言脚本必须**覆盖 demo 输出的每一个主要结论**（每一段、每一个关键数字、每一条结论行），
@@ -156,13 +187,17 @@ Expected: FAIL —— 当前模板里没有「覆盖」「每个」「具体」�
 脚本就必须 exit 1——否则这个脚本等于没断言。
 ```
 
-`algorithm` 轨的 `generate-assert`（如果该轨模板里没有这一段，就加在 `generate-unit` 的用例要求里），
-额外要求：
+- [ ] **Step 3b: 改算法轨的 `generate-unit` 模板**
+
+`core/llm/prompts.js` 第 549 行起的 `algorithm.scenarios["generate-unit"]` 里，给用例要求补上：
 
 ```text
-测试用例要**覆盖边界情况**（空输入、单个元素、极值），不能只有一条happy path；
+测试用例要**覆盖边界**情况（空输入、单个元素、极值），不能只有一条 happy path；
 用例的期望输出要**具体**（精确的 stdout 字符串），不要写「大概对」这种描述。
 ```
+
+**注意**：算法轨**没有** `generate-assert` 场景（实测：`scenarios` 只有 `generate-unit` 与
+`write-explain` 两个键）。**不要**给算法轨新增 `generate-assert`——那是 R2/R3 计划之外的设计变更。
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -183,7 +218,7 @@ Expected: 全部 PASS。若 `llm-supply-prompt.test.js` 因模板内容变化而
 ```bash
 cd C:\code\projects
 git add apps/study-hub/core/llm/prompts.js apps/study-hub/tests/remediation-supply-prompt.test.js
-git commit -m "fix(study-hub): 断言脚本模板要求覆盖每个主要结论，能抓住被改坏的逻辑"
+git commit -m "fix(study-hub): 断言与用例模板要求覆盖每个结论，能抓住被改坏的逻辑"
 git push origin main
 ```
 
@@ -711,7 +746,17 @@ $env:STUDY_HUB_LEARNING_ROOT='C:\code\learning'
 node tools/supply.js generate --track database --session db-all
 ```
 
-Expected: 逐个生成；若中途撞到配额上限，会停下并提示用 `--resume` 接着跑。
+Expected: 逐个生成；若中途撞到配额上限或 LLM 返回 503，会停下并打印提示。
+
+**实测修正（2026-11-23）**：**DB/AI 轨的 `generate` 没有 `--resume`**。
+`tools/supply.js` 的 `ALLOWED_OPTIONS` 里 `generate` 只认 `track` / `limit` / `session`；
+`--resume` 是**算法轨** `core/supply/algorithm-cli.js` 才有的旗标。
+DB/AI 侧中断后只能**重跑整条命令**；已生成的文件靠 `data/supply-self-written.json`
+豁免查脏、不会被覆盖，所以重跑不会毁掉已有产物，但会**重复花钱**在已完成的卡上。
+**因此放量时按小批跑**（例如 `--limit 5` 一批），不要一次 `--limit 30` 跑到底。
+若要真正支持续跑，需新增 DB/AI 侧的 per-card 进度状态（算法轨那套
+`supply.batch.item.algo.<stem>` 的等价物在 DB/AI 侧**不存在**）——属本计划范围外的增强，
+本轮按「小批 + 幂等重跑」处理。
 
 - [ ] **Step 2: 补齐 ai 轨**
 
@@ -1028,7 +1073,24 @@ Expected: 各项 `✅`；g++ 可用、learning 仓通、密钥有。
 node tools/supply.js plan --track algorithm
 ```
 
-Expected: 打印「算法轨缺口清单（共 N 题）」，N = 687 附近。
+Expected: 打印「算法轨缺口清单（共 N 题）」。
+
+**实测口径修正（2026-11-23）**：`scanGaps()` 对算法轨报出的缺口数是 **738**，不是 687。
+构成：learning 仓 687 道空骨架 + 工程仓 51 道 Codeforces 原题（缺参考解法/负例）。
+`scanBank()` 的形态分布实测为 **A 687 / B 0 / C 51 / ready 2**（合计 740）：
+`missing` = statement 687 / cases 687 / solution 723。
+**跑批前先取 `node tools/supply.js doctor --track algorithm` 的「题库扫描」一行作为基线**，
+它会直接打印 `共 740 题（A 687 / B 0 / C 51 / ready 2）`。
+
+**放量前必须先定的一件事（2026-11-23 实测发现）**：
+`learning/bank/` 里有 **17 份 md 带 `## 参考解法`**（15 道 `lc-*` + 2 道 `self-*`），
+但 `algorithm-batch.js` 构造 draft 时写的是 `solution: parsed.problem.solution` ——
+**参考解法一律用模型产出覆盖**，只有题面与用例才走「题库有的原样保留」。
+所以这 15 道 `lc-*` 会被要求产完整四件套（A 型要求 statement+cases+solution+negative），
+**多花一次解法的 token，且模型产的解法未必优于题库里那份手写解法**。
+当前代码**没有**「题库已有 solution 就复用」的分支。**放量前先决定这 15 道的处置**：
+- 方案 A：新增分支「题库已有解法则只让模型补题面+用例，solution 取题库原文」——省 token、保留手写质量；
+- 方案 B：接受覆盖，不改代码，在验收记录里写明「这 15 道的解法由模型重写，题库原文未被改动」。
 
 - [ ] **Step 3: 先试跑 3 道**
 

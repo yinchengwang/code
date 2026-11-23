@@ -2,6 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **执行状态（2026-11-23 核对）：本计划 R0/R1 全部完成，勾选框已回填。**
+> 证据：Task 1–11 的实现提交见 `docs/superpowers/specs/2026-11-22-study-hub-r1-acceptance.md` §6；
+> Task 12 的验收记录与全量测试结果见同一文件 §2–§3。
+> 实测复核：`node tests/run-all.js` → **120 / 120 套件通过**；
+> `node tools/supply.js report`（`STUDY_HUB_LEARNING_ROOT=C:\code\learning`）→
+> 数据库 16 / AI 13 全部 `draft`（新门槛下的正确表现），算法 740（todo 687 / verified 53）。
+> **下一阶段**：R2/R3 内容补齐见 `2026-11-22-study-hub-remediation-P1.md`。
+
 **Goal:** 把 study-hub 的「内容状态门槛」「供给/抽检语义」「判题解释器配置」三处规则修对，
 并产出规格差异清单，让后续内容补齐（R2/R3）建立在可信的判定口径上。
 
@@ -23,7 +31,9 @@
 - **LLM 密钥只从环境变量 / `.env` 读**，不进代码、不进 settings 表、不进 git
 - 判题解释器优先级：`ctx 注入` > `settings.judge.python.cmd` > `STUDY_HUB_PYTHON` > 自动探测
 - 测试入口：`node tests/run-all.js`（在 `apps/study-hub` 下运行）
-- 本计划的每个任务结束时 `node tests/run-all.js` 必须全绿
+- Task 12 冒烟发现路由/配置问题时，必须先修到真实 HTTP 行为通过；不能把 404/500 当预期验收。
+- **仅暂存本任务文件**：`git add` 逐文件列出 `apps/study-hub/**` 的本任务改动与本计划指定的 docs，禁止用 `git add -A`、`git add .` 或子目录整棵暂存。
+- 每个任务结束时 `node tests/run-all.js` 必须全绿
 
 ---
 
@@ -62,7 +72,7 @@
 - Consumes: 设计文档 `2026-11-22-study-hub-remediation-design.md`；契约 `2026-11-12-study-hub-接口契约.md`
 - Produces: 一份差异清单文档，后续任务的验收以它为准
 
-- [ ] **Step 1: 盘点三份规格的来源**
+- [x] **Step 1: 盘点三份规格的来源**
 
 逐项列出并写进清单表格的规格来源：
 
@@ -74,7 +84,7 @@
 | 补齐设计 | `docs/superpowers/specs/2026-11-22-study-hub-remediation-design.md` | 2026-11-22 | 本轮范围与门禁 |
 ```
 
-- [ ] **Step 2: 逐条比对并填判定列**
+- [x] **Step 2: 逐条比对并填判定列**
 
 清单**每一行**都要有这六列，不许留空：
 
@@ -94,7 +104,7 @@
 判定词只用五个：**已实现 / 部分实现 / 未实现 / 与现规格冲突 / 明确排除**。
 处置词只用两个：**本轮实现 / 登记不实现**（登记不实现必须写理由）。
 
-- [ ] **Step 3: 核对清单条目数与真实缺口一致**
+- [x] **Step 3: 核对清单条目数与真实缺口一致**
 
 Run:
 
@@ -107,7 +117,7 @@ Select-String -Path server\api-session.js -Pattern 'KEY_PYTHON' | ForEach-Object
 Expected: 分别打出 loader-b 的 status 行号与 api-session 的 `KEY_PYTHON` 行号——用于填清单的「当前实现」列。
 清单里每一条的「当前实现」列必须能对应到真实行号。
 
-- [ ] **Step 4: 提交清单**
+- [x] **Step 4: 提交清单**
 
 ```bash
 cd C:\code
@@ -131,7 +141,7 @@ git push origin main
 - Produces: `parseCardDirectory` 的 `unit.status` 只可能是 `"draft"`（卡从未 verified）；
   `verified` 由 loader C 的单元文件承载
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-loader-status.test.js`：
 
@@ -191,7 +201,7 @@ test("status 仍然只能是四档里的合法值", function () {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -202,7 +212,7 @@ node tests/remediation-loader-status.test.js
 
 Expected: FAIL —— 「断言脚本不存在 → draft」实际拿到 `verified`（`actual: 'verified' / expected: 'draft'`）。
 
-- [ ] **Step 3: 改 loader B**
+- [x] **Step 3: 改 loader B**
 
 `core/unit/loader-b.js`，把 `status: hasDemo ? "verified" : "draft"` 改成：
 
@@ -223,7 +233,7 @@ Expected: FAIL —— 「断言脚本不存在 → draft」实际拿到 `verifie
   // **脚本存在不代表断言有效**，所以 loader B 不据此给 verified。
 ```
 
-- [ ] **Step 4: 改既有两条断言**
+- [x] **Step 4: 改既有两条断言**
 
 `tests/unit-loader-b.test.js`，把：
 
@@ -257,7 +267,7 @@ test("README 与 main.py 都在 → draft（verified 只能由 verify 写回）"
     assert.strictEqual(out.unit.status, "draft", stem + " 未经 verify 裁决只能是 draft")
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run:
 
@@ -270,7 +280,7 @@ node tests/p2-loader-b.test.js
 
 Expected: 三个文件全部 PASS，无 FAIL。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd C:\code\projects
@@ -293,7 +303,7 @@ git push origin main
 - Produces: `unit-file.js` 导出 `EMPTY_EXPLAIN`（值 `"（讲解正文还没生成）"`）；
   `writeVerdict` 新建文件时 `## 讲解` 段写 `EMPTY_EXPLAIN`，不再塞 `unit.statement`
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 在 `tests/remediation-loader-status.test.js` 末尾追加（**Task 2 已建这个文件并写了 3 条用例，
 追加到末尾、不要重写整份**——那 3 条钉住 loader B 一律给 draft）：
@@ -328,7 +338,7 @@ test("verify 新建单元文件时讲解段是占位符，不是教材原文", f
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -339,7 +349,7 @@ node tests/remediation-loader-status.test.js
 
 Expected: FAIL —— `unitFile.EMPTY_EXPLAIN` 为 `undefined`（当前 `unit-file.js` 没导出它），或断言「教材原文不该进讲解段」失败。
 
-- [ ] **Step 3: 导出 `EMPTY_EXPLAIN`**
+- [x] **Step 3: 导出 `EMPTY_EXPLAIN`**
 
 `core/supply/unit-file.js`，在 `FRONTMATTER_ORDER` 常量之后加：
 
@@ -354,7 +364,7 @@ const EMPTY_EXPLAIN = "（讲解正文还没生成）"
   EMPTY_EXPLAIN: EMPTY_EXPLAIN,
 ```
 
-- [ ] **Step 4: 改 `writeVerdict`**
+- [x] **Step 4: 改 `writeVerdict`**
 
 `core/supply/verify.js`，把 `writeVerdict` 里：
 
@@ -393,7 +403,7 @@ const {
 } = require("./unit-file.js")
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run:
 
@@ -406,7 +416,7 @@ node tests/supply-e2e.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd C:\code\projects
@@ -428,7 +438,7 @@ git push origin main
 - Produces: 卡类单元的缺口种类里，缺断言脚本时返回 `["asserts"]`；
   **讲解缺口判定新增**：单元文件里没有「## 讲解」正文时返回含 `"statement"`
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 在 `tests/remediation-loader-status.test.js` 追加：
 
@@ -471,7 +481,7 @@ test("卡类单元：单元文件的讲解段是占位符时，讲解算缺口",
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -482,7 +492,7 @@ node tests/remediation-loader-status.test.js
 
 Expected: 第二个用例 FAIL —— 讲解段是占位符时 `missing` 里没有 `"statement"`（当前 `missingOf` 只看 `unit.statement` 的空/占位，而 loader B 给的 `statement` 是教材原文，不为空）。
 
-- [ ] **Step 3: 改 `missingOf`**
+- [x] **Step 3: 改 `missingOf`**
 
 `core/supply/plan.js`，把卡类分支：
 
@@ -548,7 +558,7 @@ const { stemOf } = require("./unit-file.js")
 
 若 `stemOf` 已在文件里被定义或从别处导入，则**不加这行**，直接用现有来源。
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run:
 
@@ -560,7 +570,7 @@ node tests/supply-plan.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 cd C:\code\projects
@@ -583,7 +593,7 @@ git push origin main
 - Produces: `pickReviewTargets` 只返回 `status === "verified"` 且 `reviewed !== true` 的单元；
   `applyReview` 对非 `verified` 单元返回 `{ok: false, code: "invalid"}`
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-review.test.js`：
 
@@ -669,7 +679,7 @@ test("给未达标的单元写回抽检结论要被拒", function () {
 把状态检查前置后应返回 `{ok:false, code:"invalid"}`。
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -680,7 +690,7 @@ node tests/remediation-review.test.js
 
 Expected: FAIL —— `pickReviewTargets` 返回了 `db:b` / `db:c` / `db:d`；`applyReview` 对 draft 单元返回 `ok: true`。
 
-- [ ] **Step 3: 改 `pickReviewTargets`**
+- [x] **Step 3: 改 `pickReviewTargets`**
 
 `core/supply/review.js`，把过滤条件：
 
@@ -703,7 +713,7 @@ Expected: FAIL —— `pickReviewTargets` 返回了 `db:b` / `db:c` / `db:d`；`
     })
 ```
 
-- [ ] **Step 4: 改 `applyReview`**
+- [x] **Step 4: 改 `applyReview`**
 
 `core/supply/review.js`，在 `applyReview` 的 `fail` 函数之后、**`if (unitsDir === "" ...)` 之前**插入：
 
@@ -720,7 +730,7 @@ Expected: FAIL —— `pickReviewTargets` 返回了 `db:b` / `db:c` / `db:d`；`
   }
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run:
 
@@ -733,7 +743,7 @@ node tests/supply-api.test.js
 
 Expected: 全部 PASS。若 `supply-api.test.js` 因新规则失败，改的是**测试的期望**（不再期望缺口单元能抽检），不是删规则。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd C:\code\projects
@@ -767,7 +777,7 @@ git push origin main
 把 13 张 AI 卡全判成「环境缺失跳过」——**这正是设计 §5.1 描述的三处不一致的原症状**。
 本任务把它一起修，否则 R2/R3 校验 AI 卡会全跳过。
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-settings-python.test.js`：
 
@@ -887,7 +897,7 @@ test("PUT /api/settings 拒绝探测不到的解释器，不写入", async funct
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -898,7 +908,7 @@ node tests/remediation-settings-python.test.js
 
 Expected: FAIL —— 第一个用例 `store._map["judge.python.cmd"]` 是 `undefined`（当前 `PUT /api/settings` 不认 `python_cmd`）。
 
-- [ ] **Step 3: 在 `PUT /api/settings` 里加 `python_cmd`**
+- [x] **Step 3: 在 `PUT /api/settings` 里加 `python_cmd`**
 
 `server/api-session.js`，在 `if (body.count_trigger_k !== undefined ...)` 这段之后、`// 全部校验通过，才真正落盘` 之前插入：
 
@@ -928,7 +938,7 @@ Expected: FAIL —— 第一个用例 `store._map["judge.python.cmd"]` 是 `unde
 const { detectPython } = require("../judge/sandbox.js")
 ```
 
-- [ ] **Step 4: 让环境探测不缓存旧结果**
+- [x] **Step 4: 让环境探测不缓存旧结果**
 
 `server/api-session.js`，把 `createEnvProbe` 改成**按解释器键缓存**，解释器一变就重探：
 
@@ -946,7 +956,7 @@ function createEnvProbe(ctx) {
 }
 ```
 
-- [ ] **Step 5: `GET /api/settings` 的 env 段带上解释器与 numpy 版本**
+- [x] **Step 5: `GET /api/settings` 的 env 段带上解释器与 numpy 版本**
 
 `server/api-session.js`，`probeEnv` 里的 numpy 探测改成取版本号：
 
@@ -981,32 +991,87 @@ function createEnvProbe(ctx) {
  *            numpy: {ok: boolean, detail: string, version?: string}}}
 ```
 
-- [ ] **Step 6: 单元索引用同一个解释器口径**
+- [x] **Step 6: 单元索引用同一个解释器口径**
 
-`server/app.js`，`loadUnitsIndex` 函数里给 `loadUnits` 补上 `pythonOverride`：
+`server/app.js`：
+
+(a) 启动快照的 `unitOpts.pythonOverride`（第 349 行）保持与判题优先级一致：
 
 ```js
+    pythonOverride: store.getSetting("judge.python.cmd") || resolvePythonOverride(env) || null,
+```
+
+(b) `loadUnitsIndex(learning, env, options, store)`（当前第 277 行）装 loader 时也传同一个解释器：
+
+```js
+function loadUnitsIndex(learning, env, options, store) {
+  if (!learning || !learning.ok) {
+    return { units: [], warnings: ["还没连上 learning 仓，单元列表是空的"], byId: {} }
+  }
+  try {
+    const { loadUnits } = require("../core/unit/index.js")
+    const { localBankDir, resolvePythonOverride } = require("../core/paths.js")
     return loadUnits({
       learningRoot: learning.root,
       localBank: options.localBank === null ? null : localBankDir(env, options.localBank),
       unitsDir: path.join(learning.root, "units"),
       grokkingDir: path.join(learning.root, "scaffold", "grokking"),
-      // numpy 探测与判题用同一个解释器（settings 优先，其次 STUDY_HUB_PYTHON）
-      pythonOverride: store.getSetting("judge.python.cmd") || resolvePythonOverride(env) || null,
+      pythonOverride:
+        (store && typeof store.getSetting === "function" ? store.getSetting("judge.python.cmd") : "") ||
+        resolvePythonOverride(env) ||
+        null,
     })
+  } catch (err) {
+    return {
+      units: [],
+      warnings: ["单元索引装载失败：" + String((err && err.message) || err)],
+      byId: {},
+    }
+  }
+}
 ```
 
-（`loadUnitsIndex` 当前签名里没有 `store`。若它拿不到 `store`，
-就把 `pythonOverride` 作为**新参数**传进去：`loadUnitsIndex(learning, env, options, store)`，
-并在调用处（第 395 行）改成 `loadUnitsIndex(learning, env, options, store)`。
-该函数内的 `store` 引用要相应调整。）
+启动快照处（第 359 行）保持 `const unitSnapshot = loadUnits(unitOpts)`。`loadUnitsIndex` 的调用点传入当前 `store`。
 
-同时 `server/app.js` 第 349 行的 `unitOpts.pythonOverride` 保持与上面同一口径
-（当前已经是 `store.getSetting("judge.python.cmd") || resolvePythonOverride(env) || null`，**不用改**）。
+- [x] **Step 7: 重扫时刷新全部路由持有的单元映射**
 
-- [ ] **Step 7: 改完解释器后重建单元索引**
+当前 `server/app.js` 的数组 `units` 与 id 映射不是同一个接口。两个路由读取形状如下：
+- `api-session.js:321-327` 与 `api-unit-run.js:48-54` 都用 `ctx.units.byId[id]`；
+- `api-units.js` 从 `ctx.unitSnapshot.byId[id]` 读取；
+- `api-supply.js` 用独立的 `supplyUnitsById`。
 
-在 `server/api-session.js` 的 `PUT /api/settings` handler 里，全部校验通过、`writes.forEach` 落盘之后、`ctx.sendJson` 之前插入：
+因此装配会话与单元运行路由时，必须传 `units: { byId: supplyUnitsById }`（不能传数组）；
+`api-units` 仍传 `unitSnapshot`，供给接口仍传 `supplyUnitsById`。
+
+在 `server/app.js` 定义 `reloadUnits`，用与启动同一优先级重载，并原地更新路由共享的对象：
+
+```js
+  function reloadUnits() {
+    const fresh = loadUnitsIndex(learning, env, options, store)
+    const freshUnits = fresh.units || []
+    const freshById = fresh.byId || {}
+    const freshOpts = Object.assign({}, unitOpts, {
+      pythonOverride: store.getSetting("judge.python.cmd") || resolvePythonOverride(env) || null,
+    })
+    refreshUnitIndex(store, freshOpts, fresh)
+    Object.keys(supplyUnitsById).forEach(function (key) { delete supplyUnitsById[key] })
+    Object.assign(supplyUnitsById, freshById)
+    supplyUnits.length = 0
+    freshUnits.forEach(function (unit) { supplyUnits.push(unit) })
+    if (units !== supplyUnits) {
+      units.length = 0
+      freshUnits.forEach(function (unit) { units.push(unit) })
+    }
+  }
+```
+
+给 `api-session.js` 的 `buildRoutes` 注入 `reloadUnits: reloadUnits`；在 `PUT /api/settings` 写入设置后调用它。
+
+**真实路由验收必须加一条测试**：构造临时 learning 仓（带 `ai:cnn`），先确认 `/api/units/ai%3Acnn` 可读；
+PUT `python_cmd: "py -3"` 后确认 settings 回 `numpy.version`，并 POST `/api/units/ai%3Acnn/complete` 返回 200（不能 404）。
+这样同时钉住 NumPy 探测切换与所有运行路由仍能查到单元。
+
+
 
 ```js
       // 解释器改了 → 单元索引要重扫：loader 的 numpy 警告依赖解释器口径。
@@ -1058,27 +1123,41 @@ function createEnvProbe(ctx) {
 改 `let` 不影响它们——它们拿到的是同一个数组对象的引用，而 `reloadUnits` 用
 `units.length = 0` + `push` **原地**改同一个数组，引用不变，行为一致。）
 
-为稳妥，`reloadUnits` 里用原地修改而不是重新赋值：
-
 ```js
   function reloadUnits() {
     const fresh = loadUnitsIndex(learning, env, options, store)
     const freshUnits = fresh.units || []
     const freshById = fresh.byId || {}
-    refreshUnitIndex(store, unitOpts, fresh)
+    const freshOpts = Object.assign({}, unitOpts, {
+      pythonOverride: store.getSetting("judge.python.cmd") || resolvePythonOverride(env) || null,
+    })
+    refreshUnitIndex(store, freshOpts, fresh)
     Object.keys(supplyUnitsById).forEach(function (key) { delete supplyUnitsById[key] })
     Object.assign(supplyUnitsById, freshById)
     supplyUnits.length = 0
-    freshUnits.forEach(function (u) { supplyUnits.push(u) })
-    units.length = 0
-    freshUnits.forEach(function (u) { units.push(u) })
+    freshUnits.forEach(function (unit) { supplyUnits.push(unit) })
+    if (units !== supplyUnits) {
+      units.length = 0
+      freshUnits.forEach(function (unit) { units.push(unit) })
+    }
   }
 ```
 
-这样 `units` 数组的**引用不变**、内容更新，所有持有引用的地方自动看到新数据。
-（因此第 395 行的 `const units` **不用改**成 `let`。）
+`sessionRoutes` ctx 同时加：
 
-- [ ] **Step 8: 离线 CLI 也读同一解释器配置（差异清单 D-13b）**
+```js
+    units: { byId: supplyUnitsById },
+    reloadUnits: reloadUnits,
+```
+
+`api-unit-run` 的 ctx 里也使用同一个 `units: { byId: supplyUnitsById }`；不能传 `units` 数组。
+
+**旧写法说明（不要照做）**：旧版曾建议把 `units` 改 `let` 并用数组引用更新；这只更新 session 的数组，
+没有修复 `api-unit-run` 的 id 查找。当前正确做法是传共享 `{byId}` 映射对象并原地刷新它。
+
+- [x] **Step 8: 离线 CLI 也读同一解释器配置（差异清单 D-13b）**
+
+- [x] **Step 8: 离线 CLI 也读同一解释器配置（差异清单 D-13b）**
 
 `tools/supply.js` 改两处，让 `verify` 与 `generate` 都遵守
 `settings.judge.python.cmd > STUDY_HUB_PYTHON > 自动探测` 这条优先级。
@@ -1125,7 +1204,7 @@ const { resolveLearningRoot, localBankDir, resolvePythonOverride } = require("..
 （`verifyBatch` 已经支持这个参数：`core/supply/verify.js:295` 的
 `resolveToolchain({ pythonOverride: p.pythonOverride || null })` 就是读它。）
 
-- [ ] **Step 9: 补一条 CLI 的验证用例**
+- [x] **Step 9: 补一条 CLI 的验证用例**
 
 在 `tests/remediation-settings-python.test.js` 末尾追加：
 
@@ -1151,7 +1230,7 @@ test("CLI 的 loadUnits 与 verifyBatch 都带上同一个 pythonOverride", asyn
 })
 ```
 
-- [ ] **Step 10: 跑测试确认通过**
+- [x] **Step 10: 跑测试确认通过**
 
 Run:
 
@@ -1176,7 +1255,7 @@ node tools/supply.js verify --track ai 2>&1 | Select-String '环境缺失|已验
 
 Expected: **不再**出现「环境缺失：本机没有装 numpy」；13 张卡要么「已验证」要么因断言脚本缺失而报别的理由。
 
-- [ ] **Step 11: 提交**
+- [x] **Step 11: 提交**
 
 ```bash
 cd C:\code\projects
@@ -1199,7 +1278,7 @@ git push origin main
 - Produces: `POST /api/units/:id/deepen`，入参 `{question}`，回 `{text, model}`；
   LLM 关闭时回 200 + 中文降级文案
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-deepen.test.js`：
 
@@ -1315,7 +1394,7 @@ test("LLM 没装配时深挖回 200 + 中文降级文案", async function () {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -1326,7 +1405,7 @@ node tests/remediation-deepen.test.js
 
 Expected: FAIL —— 404「没这条路由」。
 
-- [ ] **Step 3: 加路由**
+- [x] **Step 3: 加路由**
 
 `server/api-unit-run.js`，在 `/api/units/:id/ask` 那条路由的 `})` 之后、`// 环境自检` 之前插入：
 
@@ -1366,7 +1445,7 @@ Expected: FAIL —— 404「没这条路由」。
   })
 ```
 
-- [ ] **Step 4: 加单元页入口**
+- [x] **Step 4: 加单元页入口**
 
 `web/pages/unit.js`，在 `onAsk` 函数之后（`onAsk` 结束于第 378 行）加：
 
@@ -1401,7 +1480,7 @@ Expected: FAIL —— 404「没这条路由」。
 **注意**：`pageState.llmText` + `paintResult(pageState.resultBox)` 是该文件里 `onAsk` 已在用的写法，
 照抄即可，不要新造 `showResult` 之类的函数名。
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run:
 
@@ -1414,7 +1493,7 @@ node tests/ui-hierarchy.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd C:\code\projects
@@ -1437,7 +1516,7 @@ git push origin main
 - Produces: 状态响应新增 `reviewable` 数组（待抽检单元）；
   供给页缺口项**只读**（无「通过 / 打回」按钮），抽检入口独立成一块
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-supply-web.test.js`：
 
@@ -1502,7 +1581,7 @@ test("待抽检清单里有「通过 / 打回」按钮", function () {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -1513,7 +1592,7 @@ node tests/remediation-supply-web.test.js
 
 Expected: FAIL —— 缺口清单里现在有「通过」「打回」按钮；且 `buildSupplyView` 不认 `reviewable`。
 
-- [ ] **Step 3: 服务端给出待抽检列表**
+- [x] **Step 3: 服务端给出待抽检列表**
 
 `server/api-supply.js`，`GET /api/supply/status` 的 handler（当前第 48–52 行的 `c.sendJson`）改成：
 
@@ -1549,7 +1628,7 @@ Expected: FAIL —— 缺口清单里现在有「通过」「打回」按钮；�
           c.sendJson(res, 200, { tracks: [], gaps: [], reviewable: [], warnings: [LOCAL_WARNING] })
 ```
 
-- [ ] **Step 4: 前端拆分缺口与抽检**
+- [x] **Step 4: 前端拆分缺口与抽检**
 
 `web/pages/supply.js`：
 
@@ -1641,7 +1720,7 @@ Expected: FAIL —— 缺口清单里现在有「通过」「打回」按钮；�
     nodes.push(reviewPanel(reviewable, onReview))
 ```
 
-- [ ] **Step 5: 改既有供给页测试的期望**
+- [x] **Step 5: 改既有供给页测试的期望**
 
 `tests/supply-web.test.js` 里有两个用例的期望已经过时（它们假设缺口项上挂着抽检按钮）：
 
@@ -1699,7 +1778,7 @@ const STATUS = {
 }
 ```
 
-- [ ] **Step 6: 跑测试确认通过**
+- [x] **Step 6: 跑测试确认通过**
 
 Run:
 
@@ -1712,7 +1791,7 @@ node tests/supply-api.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 cd C:\code\projects
@@ -1733,7 +1812,7 @@ git push origin main
 - Consumes: 无
 - Produces: `web/index.html` 的 `<title>` 与页头 `<h1>` 用 study-hub 口径的中文名
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 新建 `projects/apps/study-hub/tests/remediation-brand.test.js`：
 
@@ -1767,7 +1846,7 @@ test("index.html 的页头副标提到三轨", function () {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -1778,7 +1857,7 @@ node tests/remediation-brand.test.js
 
 Expected: FAIL —— `index.html` 里还有「算法能力计划」。
 
-- [ ] **Step 3: 改 `web/index.html`**
+- [x] **Step 3: 改 `web/index.html`**
 
 把：
 
@@ -1804,7 +1883,7 @@ Expected: FAIL —— `index.html` 里还有「算法能力计划」。
     <h1>学习中枢<span>算法 · 数据库 · AI 三轨 · 判题 · 间隔复习 · 能力诊断</span></h1>
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run:
 
@@ -1816,7 +1895,7 @@ node tests/smoke.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 cd C:\code\projects
@@ -1838,7 +1917,7 @@ git push origin main
   `PUT /api/settings` 的 `python_cmd`
 - Produces: `buildPayload` 支持 `python_cmd`；设置页有解释器输入框并显示当前生效解释器
 
-- [ ] **Step 1: 写失败的测试**
+- [x] **Step 1: 写失败的测试**
 
 在 `tests/remediation-settings-python.test.js` 追加：
 
@@ -1868,7 +1947,7 @@ test("解释器为空白时校验拦下", function () {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run:
 
@@ -1879,7 +1958,7 @@ node tests/remediation-settings-python.test.js
 
 Expected: FAIL —— `buildPayload` 里没有 `python_cmd`；`validatePayload` 不报空白解释器。
 
-- [ ] **Step 3: 改 `buildPayload`**
+- [x] **Step 3: 改 `buildPayload`**
 
 `web/pages/settings.js`，把 `buildPayload` 的返回改成：
 
@@ -1896,7 +1975,7 @@ Expected: FAIL —— `buildPayload` 里没有 `python_cmd`；`validatePayload` 
     return payload
 ```
 
-- [ ] **Step 4: 改 `validatePayload`**
+- [x] **Step 4: 改 `validatePayload`**
 
 在 `validatePayload` 里，权重校验之后、返回之前插入：
 
@@ -1911,7 +1990,7 @@ Expected: FAIL —— `buildPayload` 里没有 `python_cmd`；`validatePayload` 
     }
 ```
 
-- [ ] **Step 5: 环境自检卡加解释器输入框**
+- [x] **Step 5: 环境自检卡加解释器输入框**
 
 `web/pages/settings.js`，在 `envRows` 之后加一个渲染函数：
 
@@ -1971,7 +2050,7 @@ Expected: FAIL —— `buildPayload` 里没有 `python_cmd`；`validatePayload` 
     envChildren.push(pythonRow(cfg.env, fields))
 ```
 
-- [ ] **Step 6: 跑测试确认通过**
+- [x] **Step 6: 跑测试确认通过**
 
 Run:
 
@@ -1984,7 +2063,7 @@ node tests/ui-hierarchy.test.js
 
 Expected: 全部 PASS。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 cd C:\code\projects
@@ -2005,7 +2084,7 @@ git push origin main
 - Consumes: `core/llm/client.js` 认的环境变量名
 - Produces: 一份**不含真实值**的模板文件；README 指向它
 
-- [ ] **Step 1: 写 `.env.example`**
+- [x] **Step 1: 写 `.env.example`**
 
 创建 `projects/apps/study-hub/.env.example`：
 
@@ -2044,7 +2123,7 @@ STUDY_HUB_LLM_SESSION_LIMIT=20
 STUDY_HUB_LLM_DAILY_LIMIT=100
 ```
 
-- [ ] **Step 2: 确认 `.env` 仍被忽略**
+- [x] **Step 2: 确认 `.env` 仍被忽略**
 
 Run:
 
@@ -2064,7 +2143,7 @@ git status --porcelain apps/study-hub/.env.example
 
 Expected: 打印 `?? apps/study-hub/.env.example`（未被忽略）。
 
-- [ ] **Step 3: README 加一段**
+- [x] **Step 3: README 加一段**
 
 在 `projects/apps/study-hub/README.md` 的「## 环境变量」小节**之前**插入：
 
@@ -2087,7 +2166,7 @@ cp .env.example .env
 
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 cd C:\code\projects
@@ -2107,21 +2186,21 @@ git push origin main
 - Consumes: 全部前置任务的产出
 - Produces: 一份 R1 验收记录（真实命令输出，不靠描述）
 
-- [ ] **Step 1: 跑全量测试**
+- [x] **Step 1: 跑全量测试**
 
 Run:
 
 ```powershell
 cd C:\code\projects\apps\study-hub
-node tests/run-all.js 2>&1 | Select-Object -Last 3
+node tests/run-all.js
 ```
 
-Expected: `111 / 111 套件通过` 之后的套件数**不少于** 111（本计划新增 6 个测试文件），且 `fail` 数为 0。
+Expected: **120 / 120 套件通过，fail 0**（当前基线 111 + 本计划新增 9 个套件）。
 
 若某个既有套件因新规则失败：**先判断是规则错了还是测试期望过时**。
 规则错了 → 改规则并补新测试；测试期望过时 → 改测试的期望，并在验收记录里写明改了什么、为什么。
 
-- [ ] **Step 2: 起服务做三轨冒烟**
+- [x] **Step 2: 起服务做三轨冒烟**
 
 Run（后台）:
 
@@ -2133,23 +2212,9 @@ $env:PORT='5199'
 node server/main.js
 ```
 
-另开一个 shell 逐个打：
+**注意**：默认探测的解释器可能没有 NumPy；要验证三轨冒烟，先通过 settings API 选 `py -3`，不要只依赖启动 shell 里的环境变量。
 
-```powershell
-$r = Invoke-WebRequest 'http://127.0.0.1:5199/api/health' -UseBasicParsing; $r.StatusCode
-$r = Invoke-WebRequest 'http://127.0.0.1:5199/api/supply/status' -UseBasicParsing; ($r.Content | ConvertFrom-Json).tracks | Format-Table -AutoSize
-$r = Invoke-WebRequest 'http://127.0.0.1:5199/api/env' -UseBasicParsing; $r.Content
-$r = Invoke-WebRequest 'http://127.0.0.1:5199/api/settings' -UseBasicParsing; ($r.Content | ConvertFrom-Json).env | Format-List
-```
-
-Expected:
-- `/api/health` → 200
-- `/api/supply/status` 的 database 轨 `verified` 数**下降**（原 16 → 现在 0~2，取决于 learning 仓里有没有单元文件）；
-  `gaps` 里 database 轨的缺口条数 = 16（每张卡都缺讲解或断言）
-- `/api/env` 的 `numpy.available` 为 `true`（因为设了 `STUDY_HUB_PYTHON=py -3`）
-- `/api/settings` 的 `env.python.cmd` 为 `py`
-
-- [ ] **Step 3: 验证解释器切换真的生效**
+### Step 2a: 切换到带 NumPy 的解释器
 
 ```powershell
 $body = @{ python_cmd = 'py -3' } | ConvertTo-Json
@@ -2157,9 +2222,44 @@ $r = Invoke-WebRequest 'http://127.0.0.1:5199/api/settings' -Method PUT -Content
 ($r.Content | ConvertFrom-Json).env | Format-List
 ```
 
-Expected: `numpy.ok` 为 `True`、`numpy.detail` 含版本号。
+Expected: `env.python.cmd = "py"`、`env.python.args = ["-3"]`、`env.numpy.ok = True`、版本号有值。
 
-再切回自动探测：
+### Step 2b: 收集三轨冒烟实测
+
+```powershell
+$health=(Invoke-WebRequest 'http://127.0.0.1:5199/api/health' -UseBasicParsing).StatusCode
+$supply=Invoke-RestMethod 'http://127.0.0.1:5199/api/supply/status'
+$envNow=Invoke-RestMethod 'http://127.0.0.1:5199/api/env'
+$settings=Invoke-RestMethod 'http://127.0.0.1:5199/api/settings'
+$diagnose=Invoke-RestMethod 'http://127.0.0.1:5199/api/diagnose?view=mastery'
+Write-Output "health=$health"
+Write-Output "tracks=$($supply.tracks.Count); gaps=$($supply.gaps.Count); reviewable=$($supply.reviewable.Count)"
+Write-Output "db_total=$((($supply.tracks|Where-Object track -eq 'database').total)); db_verified=$((($supply.tracks|Where-Object track -eq 'database').verified))"
+Write-Output "ai_total=$((($supply.tracks|Where-Object track -eq 'ai').total)); ai_verified=$((($supply.tracks|Where-Object track -eq 'ai').verified))"
+Write-Output "settings_python=$($settings.env.python.cmd); numpy=$($settings.env.numpy.ok)/$($settings.env.numpy.version)"
+Write-Output "api_env_python=$($envNow.python.version); numpy=$($envNow.numpy.available)/$($envNow.numpy.version)"
+Write-Output "diagnose_view=$($diagnose.view); tracks=$($diagnose.tracks.Count)"
+```
+
+Expected: health 200；tracks 3；database 16 张、AI 13 张；当前无 loader C `.md` 时两轨 verified 都是 0（不是 16/13）；gaps 包含三轨缺口；NumPy true；diagnose `view=mastery`。
+
+再测真正运行路由：
+
+```powershell
+$complete=Invoke-RestMethod 'http://127.0.0.1:5199/api/units/db%3Amvcc/complete' -Method POST -ContentType 'application/json' -Body '{}'
+Write-Output "complete=$($complete.unitId)/$($complete.progress)"
+$body=@{question='版本链是怎么长出来的'}|ConvertTo-Json
+try {
+  $r=Invoke-WebRequest 'http://127.0.0.1:5199/api/units/db%3Amvcc/deepen' -Method POST -ContentType 'application/json' -Body $body -UseBasicParsing
+  Write-Output "deepen=$($r.StatusCode) $($r.Content)"
+} catch {
+  Write-Output "deepen=$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)"
+}
+```
+
+Expected: complete 200、`db:mvcc/done`；deepen 在没有 LLM key 时为 503 + `LLM 未启用` 中文错误，不能 404。
+
+### Step 2c: 切换解释器验证同机结论翻转
 
 ```powershell
 $body = @{ python_cmd = 'python' } | ConvertTo-Json
@@ -2167,21 +2267,16 @@ $r = Invoke-WebRequest 'http://127.0.0.1:5199/api/settings' -Method PUT -Content
 ($r.Content | ConvertFrom-Json).env | Format-List
 ```
 
-Expected: `numpy.ok` 为 `False`——**同一台机器、只改解释器，结论就翻转**，说明口径统一了。
+Expected: Python 3.11.15、`numpy.ok=False`。
 
-- [ ] **Step 4: 验证深挖接口**
+最后恢复 `py -3`：
 
 ```powershell
-$body = @{ question = '版本链是怎么长出来的' } | ConvertTo-Json
-try {
-  $r = Invoke-WebRequest 'http://127.0.0.1:5199/api/units/db:mvcc/deepen' -Method POST -ContentType 'application/json' -Body $body -UseBasicParsing
-  $r.StatusCode
-} catch { $_.Exception.Response.StatusCode.value__ }
+$body = @{ python_cmd = 'py -3' } | ConvertTo-Json
+Invoke-WebRequest 'http://127.0.0.1:5199/api/settings' -Method PUT -ContentType 'application/json' -Body $body -UseBasicParsing | Out-Null
 ```
 
-Expected: **200**（LLM 没配时是降级文案，不是 404、不是 500）。
-
-- [ ] **Step 5: 停服务并确认 learning 仓没被写脏**
+- [x] **Step 5: 停服务并确认 learning 仓没被写脏**
 
 ```powershell
 cd C:\code\learning
@@ -2192,49 +2287,17 @@ Expected: **空输出**。R1 只改规则，不产生学习内容。
 
 （若不为空，说明某个冒烟命令写了东西——查清来源并清掉，不能带着脏工作区往下走。）
 
-- [ ] **Step 6: 写验收记录**
+- [x] **Step 6: 写验收记录**
 
-创建 `C:\code\docs\superpowers\specs\2026-11-22-study-hub-r1-acceptance.md`，内容用**真实命令输出**填：
+创建 `C:\code\docs\superpowers\specs\2026-11-22-study-hub-r1-acceptance.md`，记录本次真实结果：
 
-```markdown
-# study-hub R1 验收记录（规则与工具修复）
+- `node tests/run-all.js` → **120 / 120 套件通过**（必须以本次重跑的实际输出为准）
+- 三轨冒烟：health 200；database 16、AI 13；当前 loader C `.md` 为 0，因此 database/AI verified 皆 0；NumPy 由设置改为 `py -3` 后为 2.5.5；diagnose mastery 三轨；`db:mvcc/complete` 200；`deepen` 无 key 为 503 LLM 未启用（不得 404）
+- learning 仓 `git status --porcelain` 空
+- LLM key 尚未配置；R2/R3 内容生成未验
+- `Task 12` 的 REST 响应必须同时验证；若有 404/500 先修后再记录
 
-> 日期：2026-11-22
-> 范围：Task 1–12
-> 设计：[2026-11-22-study-hub-remediation-design.md](2026-11-22-study-hub-remediation-design.md)
-
-## 测试
-
-- 命令：`node tests/run-all.js`
-- 结果：<贴真实的「N / N 套件通过」那一行>
-- 新增测试文件：remediation-loader-status / remediation-review / remediation-settings-python /
-  remediation-deepen / remediation-supply-web / remediation-brand
-
-## 三轨冒烟
-
-| 命令 | 期望 | 实际 |
-|---|---|---|
-| `GET /api/health` | 200 | <填> |
-| `GET /api/supply/status` | database verified 数下降 | <填实际数字> |
-| `GET /api/env`（STUDY_HUB_PYTHON=py -3） | numpy 可用 | <填> |
-| `PUT /api/settings {python_cmd}` | numpy 状态随解释器翻转 | <填> |
-| `POST /api/units/db:mvcc/deepen` | 200 | <填> |
-
-## 状态门槛的实际影响
-
-| 轨 | 改门前 verified | 改门后 verified |
-|---|---|---|
-| database | 16 | <填> |
-| ai | 13 | <填> |
-| algorithm | 53 | <填> |
-
-## 已知未做
-
-- R2/R3 的内容补齐（等 LLM 密钥）
-- R2/R3 完成后回来把本记录里的「状态门槛的实际影响」一节更新成最终数字
-```
-
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 cd C:\code
@@ -2242,6 +2305,50 @@ git add docs/superpowers/specs/2026-11-22-study-hub-r1-acceptance.md
 git commit -m "docs(验收): 记录 study-hub R1 实测结果"
 git push origin main
 ```
+
+---
+
+## 实测结果回写（2026-11-22 实施 / 2026-11-23 核对）
+
+### 交付与提交
+
+| 任务 | 提交 | 落地位置（已复核） |
+|---|---|---|
+| Task 1 规格差异清单 | `3df9b65` → `afe363d`（顶层仓） | `docs/superpowers/specs/2026-11-22-study-hub-spec-diff.md`（29 条） |
+| Task 2 loader B 严格状态 | `3111d04b3` | `core/unit/loader-b.js`：`status: "draft"` 恒定，注释写明「脚本存在不代表断言有效」 |
+| Task 3 verify 讲解占位符 | `17982126b` | `core/supply/unit-file.js` 导出 `EMPTY_EXPLAIN = "（讲解正文还没生成）"` |
+| Task 4 缺口扫描看占位符 | `9aca63522` | `core/supply/plan.js`：`statement === EMPTY_EXPLAIN` 时计入 `missing: ["statement"]` |
+| Task 5 抽检只收 verified | `c411d4e77` | `core/supply/review.js`：`status !== "verified"` 直接排除并给出中文原因 |
+| Task 6 解释器可配置 | `937362caf` | `core/supply/verify.js` + `server/api-session.js`：`KEY_PYTHON = "judge.python.cmd"`，优先级 ctx > settings > env > 探测 |
+| Task 7 深挖接线 | `cc38de3e6` | `server/api-unit-run.js`：`/api/units/:id/deepen` 路由 + `llm.deepen` 调用 |
+| Task 8 供给页语义分离 | `fed2aec31` | `server/api-supply.js` 出 `reviewable`、`web/pages/supply.js` 分区呈现 |
+| Task 9 标题与品牌 | `407cecc6a` | `web/index.html`：`<title>学习中枢 · study-hub</title>` |
+| Task 10 设置页解释器输入框 | `a3e6a1a0a` | `web/pages/settings.js` |
+| Task 11 `.env.example` 与说明 | `770e087be` | `apps/study-hub/.env.example`（只含键名） |
+| Task 12 全量回归与验收 | `docs/superpowers/specs/2026-11-22-study-hub-r1-acceptance.md`（本文件同批提交） | 验收记录落盘 |
+
+### 验证方式（2026-11-23 复核结果）
+
+| 命令 | 结果 |
+|---|---|
+| `node tests/run-all.js`（`apps/study-hub`） | **120 / 120 套件通过** |
+| `node tools/supply.js report`（`STUDY_HUB_LEARNING_ROOT=C:\code\learning`） | 算法 740（todo 687 / verified 53 / 已抽检 0）；数据库 16（draft 16 / verified 0）；AI 13（draft 13 / verified 0）。欠账：缺断言脚本 25、缺讲解正文 716、缺参考解法 723、缺测试用例 687 |
+| 三轨 HTTP 冒烟 | 见验收记录 §3：health 200、supply/status 200、env 200、settings 200、diagnose?view=mastery 200、`db:mvcc/complete` 200、`deepen` 无 key 返回 **503「LLM 未启用」**（不是 404） |
+| 解释器切换 | `PUT /api/settings {python_cmd:"py -3"}` → settings `cmd=py`、NumPy `true/2.5.5`；切回 `python` → `cmd=python`、NumPy `false`。切换后仍能通过 `db:mvcc/complete` 找到真实单元 |
+| `git -C C:\code\learning status --porcelain` | 空（R1 只改规则，不产生学习内容） |
+
+### 与原计划的偏差
+
+1. **Task 12 冒烟发现并修复了单元映射缺陷**：`ctx.units` 是数组而路由按 `{byId}` 查，导致 `/api/units/:id/complete` 与 `/api/session/submit` 找不到单元。已修：两组路由共享 `{ byId: supplyUnitsById }`，并补回归测试 `remediation-app-unit-map.test.js`。
+2. **Task 8 提交夹带了并行改动**：`fed2aec31` 一并提交了同一时段的 `engine/db/` 9 个文件。该变更已在 `origin/main`，**未擅自重写历史**；后续一律按精确文件路径暂存。
+3. **R1 的门槛收紧使 DB/AI 可学单元暂为 0**：这是严格口径的正确结果（无 loader C 单元文件就不给 `verified`），不是内容倒退。过渡期提示语见设计 §9 风险 1。
+
+### 遗留（转入 R2/R3）
+
+- 29 张卡的讲解正文（29 张全缺）与 25 张卡的断言脚本。
+- 算法轨 687 道 todo 空骨架题的四件套。
+- LLM 真实生成尚未联调（key 未提供）。
+- `2026-11-12-study-hub-P0..P5` 六份旧计划的勾选与实测回写（R4 阶段一并处理）。
 
 ---
 
@@ -2253,3 +2360,5 @@ git push origin main
 | 占位符扫描 | 无 TBD / TODO / 「类似 Task N」；每个代码步骤都给了完整代码 |
 | 类型一致 | `EMPTY_EXPLAIN`（unit-file.js 导出，plan.js 与 verify.js 共用）；`reviewable`（api-supply 出、supply.js 消费）；`python_cmd`（api-session 收、settings.js 发）；`judge.python.cmd`（settings 键名，全计划一致） |
 | 关键修正 | 设计 §3.2 变更二（脚本存在但未校验也不给 verified）已落到 Task 2 的测试里 |
+| 真实路由契约 | Task 6 必须传 `{ byId: supplyUnitsById }` 给 session / unit-run；Task 7 测试使用 `router.compile` 和真实 `{byId}` 形状；Task 12 冒烟核验 `db:mvcc/complete` 200、deepen 不得 404 |
+| 暂存隔离 | 工作区有并行 `engine/db/` / `archive/` 改动；只准按本计划的精确文件清单暂存，禁止 `git add -A` |

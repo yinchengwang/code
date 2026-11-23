@@ -1,7 +1,11 @@
 # 学习中枢 App（study-hub）—— 设计文档
 
 > 日期：2026-11-12
-> 状态：设计已确认，待写实施计划
+> 状态：设计已确认；**主体已实施**（P0–P5 计划见 `docs/superpowers/plans/2026-11-12-study-hub-P0..P5-*.md`），
+> 2026-11-22 的补齐与收尾工作（内容缺口、状态门槛、规格差异闭环）由
+> [2026-11-22-study-hub-remediation-design.md](2026-11-22-study-hub-remediation-design.md) 接管，
+> 实施计划见 `2026-11-22-study-hub-remediation-P0.md`（R0/R1，**已完成**）与
+> `2026-11-22-study-hub-remediation-P1.md`（R2/R3/R4，待 LLM 密钥）
 > 归属仓：`projects`（工程产物） + `learning`（学习数据）
 > 前身：`projects/apps/algo-plan`（算法能力提升计划 App，M1–M6 已完成），本轮改名并扩为三轨合一
 
