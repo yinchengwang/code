@@ -21,7 +21,6 @@ ALLOWED_ROOT_DIRS = {
 # 有明确用途、由用户选择保留的本机目录：仅说明，不作为待清理警告。
 PRESERVED_ROOT_DIRS = {
     ".superpowers": "历史任务账本；保留 progress/brief/report，不再存放大体积试验夹具",
-    ".worktrees": "含未推送的 feature/wiki-p1 分支，用户选择保留",
     "m5-verify": "历史验证副本；既有计划明确要求保护",
     ".claude": "Claude Code 本机权限配置",
     ".vscode": "本机编辑器配置；检查配置有效性后再决定是否清理",
