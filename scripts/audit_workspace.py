@@ -21,10 +21,9 @@ ALLOWED_ROOT_DIRS = {
 # 有明确用途、由用户选择保留的本机目录：仅说明，不作为待清理警告。
 PRESERVED_ROOT_DIRS = {
     ".superpowers": "历史任务账本；保留 progress/brief/report，不再存放大体积试验夹具",
-    "m5-verify": "历史验证副本；既有计划明确要求保护",
     ".claude": "Claude Code 本机权限配置",
     ".vscode": "本机编辑器配置；检查配置有效性后再决定是否清理",
-    ".scratch": "临时探针目录；本次用户要求保留活跃项，清理时先逐项审查",
+    ".scratch": "探针目录；2026-11-25 已清掉一次性探针，仅剩 wiki-baseline-head 里不可重建的基线脚本",
 }
 # 这些目录是已知临时工作区；报告但不删除。
 KNOWN_TEMP_DIRS = {
